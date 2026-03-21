@@ -1,10 +1,10 @@
-const CACHE = 'feriados-ar-v1';
+const CACHE = 'feriados-ar-v2';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
+  '/holidays/',
+  '/holidays/index.html',
+  '/holidays/manifest.json',
+  '/holidays/icons/icon-192.png',
+  '/holidays/icons/icon-512.png',
   'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap'
 ];
 
@@ -69,8 +69,8 @@ self.addEventListener('push', e => {
   e.waitUntil(
     self.registration.showNotification(data.title || '📅 Feriado próximo', {
       body: data.body || '',
-      icon: '/icons/icon-192.png',
-      badge: '/icons/icon-192.png',
+      icon: '/holidays/icons/icon-192.png',
+      badge: '/holidays/icons/icon-192.png',
       vibrate: [200, 100, 200],
       tag: 'feriado',
       renotify: true
@@ -84,7 +84,7 @@ self.addEventListener('notificationclick', e => {
   e.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
       if (clientList.length > 0) return clientList[0].focus();
-      return clients.openWindow('/');
+      return clients.openWindow('/holidays/');
     })
   );
 });
@@ -101,8 +101,8 @@ async function checkAndNotify() {
     if (diff === 5) {
       await self.registration.showNotification('📅 Feriado en 5 días', {
         body: `${f.nombre}\n${fmtFull(d)}`,
-        icon: '/icons/icon-192.png',
-        badge: '/icons/icon-192.png',
+        icon: '/holidays/icons/icon-192.png',
+        badge: '/holidays/icons/icon-192.png',
         vibrate: [200, 100, 200],
         tag: `feriado-${f.fecha}`,
         data: { fecha: f.fecha }
@@ -112,8 +112,8 @@ async function checkAndNotify() {
     if (diff === 0) {
       await self.registration.showNotification('🎉 ¡Hoy es feriado!', {
         body: `${f.nombre} — ¡A descansar!`,
-        icon: '/icons/icon-192.png',
-        badge: '/icons/icon-192.png',
+        icon: '/holidays/icons/icon-192.png',
+        badge: '/holidays/icons/icon-192.png',
         vibrate: [300, 100, 300, 100, 300],
         tag: `feriado-hoy-${f.fecha}`,
       });
