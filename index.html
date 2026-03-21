@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Feriados AR</title>
+<meta name="description" content="Feriados oficiales de la República Argentina. Recordatorios automáticos 5 días antes.">
+<meta name="theme-color" content="#1565c0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Feriados AR">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --sky:#74b9e7; --sun:#f5c842; --celeste:#75aadb;
+    --dark:#1a1a2e; --mid:#2d2d4a; --text:#f0ece0;
+    --muted:#8a8ab0; --accent:#f5c842; --green:#4caf82; --red:#e05c5c;
+  }
+  body { background:var(--dark); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; overflow-x:hidden; }
+
+  header { position:relative; background:linear-gradient(160deg,#0a2a5e 0%,#1565c0 50%,#1e88e5 100%); padding:40px 24px 60px; text-align:center; overflow:hidden; }
+  .flag-stripe { position:absolute; left:0; right:0; height:12px; }
+  .flag-stripe.top { top:0; background:var(--celeste); }
+  .flag-stripe.mid { top:12px; background:#fff; height:8px; }
+  .flag-stripe.bot { bottom:0; background:var(--celeste); }
+
+  .sun-icon { width:56px; height:56px; margin:0 auto 12px; background:var(--sun); border-radius:50%; position:relative; box-shadow:0 0 0 6px rgba(245,200,66,.25),0 0 30px rgba(245,200,66,.4); animation:pulse-sun 3s ease-in-out infinite; }
+  .sun-icon::before { content:''; position:absolute; inset:-14px; background:conic-gradient(transparent 0deg,var(--sun) 10deg,transparent 20deg,transparent 40deg,var(--sun) 50deg,transparent 60deg,transparent 80deg,var(--sun) 90deg,transparent 100deg,transparent 120deg,var(--sun) 130deg,transparent 140deg,transparent 160deg,var(--sun) 170deg,transparent 180deg,transparent 200deg,var(--sun) 210deg,transparent 220deg,transparent 240deg,var(--sun) 250deg,transparent 260deg,transparent 280deg,var(--sun) 290deg,transparent 300deg,transparent 320deg,var(--sun) 330deg,transparent 340deg); border-radius:50%; animation:spin-sun 20s linear infinite; }
+  @keyframes spin-sun { to { transform:rotate(360deg); } }
+  @keyframes pulse-sun { 0%,100%{box-shadow:0 0 0 6px rgba(245,200,66,.25),0 0 30px rgba(245,200,66,.4)} 50%{box-shadow:0 0 0 10px rgba(245,200,66,.15),0 0 50px rgba(245,200,66,.6)} }
+  header h1 { font-family:'Bebas Neue',sans-serif; font-size:clamp(2.4rem,8vw,4rem); letter-spacing:4px; color:#fff; text-shadow:0 2px 20px rgba(0,0,0,.4); }
+  header p  { font-size:.9rem; color:rgba(255,255,255,.65); margin-top:6px; letter-spacing:2px; text-transform:uppercase; }
+
+  .main { max-width:600px; margin:0 auto; padding:0 16px 40px; }
+
+  .banner { margin-top:20px; border-radius:16px; padding:18px 20px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; border:1px solid rgba(255,255,255,.08); }
+  .banner.notif   { background:var(--mid); }
+  .banner.install { background:linear-gradient(135deg,#1b4332,#2d6a4f); display:none; }
+  .banner.install.visible { display:flex; }
+  .banner.error   { background:linear-gradient(135deg,#4a1515,#7a2020); }
+  .banner .icon   { font-size:1.6rem; flex-shrink:0; }
+  .banner .txt    { flex:1; min-width:180px; }
+  .banner .txt strong { display:block; font-size:.95rem; margin-bottom:2px; }
+  .banner .txt small  { color:var(--muted); font-size:.78rem; }
+  .banner.install .txt strong { color:#d8f3dc; }
+
+  .btn { padding:10px 20px; border:none; border-radius:10px; font-family:'DM Sans',sans-serif; font-weight:500; font-size:.85rem; cursor:pointer; transition:all .2s; white-space:nowrap; }
+  .btn-primary { background:var(--accent); color:var(--dark); }
+  .btn-primary:hover { background:#e6b82a; transform:translateY(-1px); }
+  .btn-muted { background:rgba(255,255,255,.07); color:var(--muted); }
+
+  .loading { margin-top:28px; text-align:center; padding:40px 20px; color:var(--muted); font-size:.9rem; }
+  .spinner { width:36px; height:36px; margin:0 auto 16px; border:3px solid rgba(255,255,255,.1); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  .next-card { margin-top:20px; background:linear-gradient(135deg,#1565c0 0%,#0d47a1 100%); border-radius:20px; padding:28px; position:relative; overflow:hidden; border:1px solid rgba(255,255,255,.1); }
+  .next-card::after { content:'🇦🇷'; position:absolute; right:-10px; top:-10px; font-size:7rem; opacity:.07; transform:rotate(-15deg); }
+  .next-card .label { font-size:.7rem; text-transform:uppercase; letter-spacing:3px; color:rgba(255,255,255,.5); margin-bottom:8px; }
+  .next-card .holiday-name { font-family:'Bebas Neue',sans-serif; font-size:clamp(1.6rem,5vw,2.4rem); letter-spacing:2px; line-height:1.1; color:#fff; }
+  .next-card .holiday-date { margin-top:10px; color:var(--accent); font-size:.9rem; font-weight:500; }
+  .next-card .days-badge { display:inline-block; margin-top:14px; background:rgba(255,255,255,.12); border-radius:30px; padding:6px 16px; font-size:.85rem; color:#fff; }
+  .days-badge.today { background:var(--green); }
+  .days-badge.soon  { background:var(--red); }
+
+  .section-title { font-family:'Bebas Neue',sans-serif; font-size:1.5rem; letter-spacing:3px; color:var(--muted); margin:32px 0 12px; }
+  .year-tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .year-tab { padding:6px 16px; border:1px solid rgba(255,255,255,.1); border-radius:30px; background:transparent; color:var(--muted); font-family:'DM Sans',sans-serif; font-size:.82rem; cursor:pointer; transition:all .2s; }
+  .year-tab.active { background:var(--accent); color:var(--dark); border-color:var(--accent); font-weight:600; }
+
+  .holiday-list { display:flex; flex-direction:column; gap:10px; }
+  .h-item { background:var(--mid); border-radius:14px; padding:16px 18px; display:flex; align-items:center; gap:14px; border:1px solid rgba(255,255,255,.04); transition:all .2s; position:relative; overflow:hidden; }
+  .h-item:hover { border-color:rgba(255,255,255,.12); transform:translateX(3px); }
+  .h-item.past    { opacity:.35; }
+  .h-item.next-up { border-color:var(--accent); }
+  .h-item.next-up::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent); border-radius:3px 0 0 3px; }
+
+  .h-date-box { width:46px; height:50px; background:rgba(255,255,255,.06); border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0; }
+  .h-date-box .day-num  { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; line-height:1; color:#fff; }
+  .h-date-box .month-ab { font-size:.6rem; text-transform:uppercase; letter-spacing:1px; color:var(--muted); }
+  .h-info { flex:1; }
+  .h-info .h-name { font-size:.9rem; font-weight:500; color:var(--text); }
+  .h-info .h-type { font-size:.72rem; color:var(--muted); margin-top:2px; text-transform:uppercase; letter-spacing:1px; }
+  .h-countdown { font-size:.78rem; font-weight:500; padding:4px 10px; border-radius:20px; white-space:nowrap; flex-shrink:0; }
+  .count-future { background:rgba(117,170,219,.15); color:var(--sky); }
+  .count-today  { background:var(--green); color:#fff; }
+  .count-past   { background:transparent; color:var(--muted); }
+
+  footer { text-align:center; padding:20px; color:var(--muted); font-size:.72rem; letter-spacing:1px; }
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--green); color:#fff; padding:12px 24px; border-radius:30px; font-size:.85rem; font-weight:500; z-index:999; transition:transform .4s cubic-bezier(.34,1.56,.64,1); white-space:nowrap; pointer-events:none; }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="flag-stripe top"></div>
+  <div class="flag-stripe mid"></div>
+  <div class="sun-icon"></div>
+  <h1>Feriados Oficiales</h1>
+  <p id="headerYear">República Argentina</p>
+  <div class="flag-stripe bot"></div>
+</header>
+
+<div class="main">
+  <div class="banner notif">
+    <span class="icon">🔔</span>
+    <div class="txt">
+      <strong>Activar recordatorios</strong>
+      <small>Te avisamos 5 días antes de cada feriado oficial</small>
+    </div>
+    <button class="btn btn-primary" id="btnNotif" onclick="requestNotifs()">Activar</button>
+  </div>
+
+  <div class="banner install" id="installBanner">
+    <span class="icon">📲</span>
+    <div class="txt">
+      <strong>Agregar a pantalla de inicio</strong>
+      <small>Instalá la app para acceso rápido</small>
+    </div>
+    <button class="btn btn-primary" onclick="installApp()">Instalar</button>
+  </div>
+
+  <div id="content">
+    <div class="loading"><div class="spinner"></div>Cargando feriados…</div>
+  </div>
+</div>
+
+<footer id="footer"></footer>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────
+const API          = y => `https://nolaborables.com.ar/api/v2/feriados/${y}`;
+const TIPOS_OK     = ['inamovible', 'trasladable'];
+const MESES        = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const DIAS         = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const MESES_F      = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+// ── UTILS ─────────────────────────────────────────────────────
+const hoy      = () => { const n=new Date(); return new Date(n.getFullYear(),n.getMonth(),n.getDate()); };
+const diffDays = (a,b) => Math.round((a-b)/86400000);
+const fmtFull  = d => `${DIAS[d.getDay()]} ${d.getDate()} de ${MESES_F[d.getMonth()]}`;
+const toDate   = f => new Date(f.year, f.mes-1, f.dia);
+
+// ── ESTADO ────────────────────────────────────────────────────
+let cache = {};       // { 2026: [...feriados] }
+let anioActivo = new Date().getFullYear();
+let notifTimer = null;
+
+// ── FETCH ─────────────────────────────────────────────────────
+async function fetchAnio(y) {
+  if (cache[y]) return cache[y];
+  const r = await fetch(API(y));
+  if (!r.ok) throw new Error(`Error ${r.status} al obtener feriados de ${y}`);
+  const data = await r.json();
+  cache[y] = data.filter(f => TIPOS_OK.includes(f.tipo)).map(f => ({...f, year:y}));
+  return cache[y];
+}
+
+async function cargarDatos() {
+  const yearActual = new Date().getFullYear();
+  const now = hoy();
+  try {
+    await fetchAnio(yearActual);
+    // Si todos los feriados del año ya pasaron, cargar también el siguiente
+    const hayFuturos = cache[yearActual].some(f => toDate(f) >= now);
+    if (!hayFuturos) {
+      try { await fetchAnio(yearActual + 1); anioActivo = yearActual + 1; } catch(_) {}
+    }
+    // Si estamos en diciembre, pre-cargar el año siguiente para tenerlo listo
+    if (new Date().getMonth() === 11) {
+      fetchAnio(yearActual + 1).catch(() => {});
+    }
+    renderTodo();
+    // Agendar notifs si ya estaban activas
+    if (localStorage.getItem('notif')==='1' && Notification?.permission==='granted') {
+      scheduleNotifications();
+    }
+  } catch(err) {
+    mostrarError(err);
+  }
+}
+
+// ── RENDER ────────────────────────────────────────────────────
+function renderTodo() {
+  const now   = hoy();
+  const years = Object.keys(cache).map(Number).sort();
+
+  document.getElementById('headerYear').textContent =
+    `República Argentina · ${years.join(' / ')}`;
+
+  // Próximo feriado de todos los años combinados
+  const todosFuturos = years.flatMap(y => cache[y])
+    .map(f => ({...f, d:toDate(f)}))
+    .filter(f => f.d >= now)
+    .sort((a,b) => a.d - b.d);
+
+  let html = '';
+
+  if (todosFuturos.length) {
+    const next = todosFuturos[0];
+    const diff = diffDays(next.d, now);
+    const cls  = diff===0?'today':diff<=5?'soon':'';
+    const txt  = diff===0?'¡Hoy!':diff===1?'Mañana':`En ${diff} días`;
+    html += `<div class="next-card">
+      <div class="label">Próximo feriado oficial</div>
+      <div class="holiday-name">${next.nombre}</div>
+      <div class="holiday-date">${fmtFull(next.d)}</div>
+      <span class="days-badge ${cls}">${txt}</span>
+    </div>`;
+  }
+
+  html += `<div class="section-title">Todos los feriados</div>`;
+
+  if (years.length > 1) {
+    html += `<div class="year-tabs">` +
+      years.map(y => `<button class="year-tab${y===anioActivo?' active':''}" onclick="cambiarAnio(${y})">${y}</button>`).join('') +
+    `</div>`;
+  }
+
+  html += renderLista(cache[anioActivo] || [], now);
+  document.getElementById('content').innerHTML = html;
+  document.getElementById('footer').innerHTML =
+    `Fuente: <a href="https://nolaborables.com.ar" target="_blank" style="color:var(--muted)">nolaborables.com.ar</a> · Ley 27.399<br>Solo feriados inamovibles y trasladables · excluye días no laborables`;
+}
+
+function renderLista(feriados, now) {
+  if (!feriados.length) return `<p style="color:var(--muted);padding:20px 0;font-size:.85rem">No hay datos disponibles.</p>`;
+  const sorted = [...feriados].sort((a,b)=>toDate(a)-toDate(b));
+  const nextF  = sorted.find(f => toDate(f) >= now);
+  return `<div class="holiday-list">` +
+    sorted.map(f => {
+      const d    = toDate(f);
+      const diff = diffDays(d, now);
+      const isNext = nextF && f.dia===nextF.dia && f.mes===nextF.mes;
+      let cc='count-future', ct='';
+      if (diff===0){cc='count-today';ct='¡Hoy!';}
+      else if (diff>0){ct=`${diff}d`;}
+      else{cc='count-past';ct='Pasado';}
+      return `<div class="h-item${diff<0?' past':''}${isNext?' next-up':''}">
+        <div class="h-date-box">
+          <span class="day-num">${d.getDate()}</span>
+          <span class="month-ab">${MESES[d.getMonth()]}</span>
+        </div>
+        <div class="h-info">
+          <div class="h-name">${f.nombre}</div>
+          <div class="h-type">${f.tipo==='inamovible'?'📌 Inamovible':'📅 Trasladable'} · ${DIAS[d.getDay()]}</div>
+        </div>
+        <span class="h-countdown ${cc}">${ct}</span>
+      </div>`;
+    }).join('') +
+  `</div>`;
+}
+
+function cambiarAnio(y) {
+  anioActivo = y;
+  if (!cache[y]) {
+    document.getElementById('content').innerHTML = '<div class="loading"><div class="spinner"></div>Cargando…</div>';
+    fetchAnio(y).then(renderTodo).catch(mostrarError);
+  } else {
+    renderTodo();
+  }
+}
+
+function mostrarError(err) {
+  console.error(err);
+  document.getElementById('content').innerHTML = `
+    <div class="banner error" style="margin-top:20px">
+      <span class="icon">⚠️</span>
+      <div class="txt">
+        <strong>No se pudo cargar</strong>
+        <small>${err.message || 'Verificá tu conexión e intentá de nuevo'}</small>
+      </div>
+      <button class="btn btn-primary" onclick="location.reload()">Reintentar</button>
+    </div>`;
+}
+
+// ── NOTIFICACIONES ────────────────────────────────────────────
+async function requestNotifs() {
+  const btn = document.getElementById('btnNotif');
+  if (!('Notification' in window)) { showToast('Tu navegador no soporta notificaciones 😕'); return; }
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    btn.textContent='✓ Activadas'; btn.className='btn btn-muted'; btn.disabled=true;
+    showToast('¡Notificaciones activadas! 🎉');
+    localStorage.setItem('notif','1');
+    scheduleNotifications();
+  } else { showToast('Permiso denegado. Habilitalo en tu navegador.'); }
+}
+
+function scheduleNotifications() {
+  const now  = hoy();
+  Object.values(cache).flat().forEach(f => {
+    const d = toDate(f), diff = diffDays(d, now);
+    if (diff===5) setTimeout(()=>fireNotif(f.nombre, d, 5), 3000);
+    if (diff===0) setTimeout(()=>new Notification('🎉 ¡Hoy es feriado!',{
+      body:`${f.nombre} — ¡A descansar!`, icon:'icons/icon-192.png'
+    }), 2000);
+  });
+  if (notifTimer) clearInterval(notifTimer);
+  notifTimer = setInterval(scheduleNotifications, 24*60*60*1000);
+}
+
+function fireNotif(nombre, fecha, dias) {
+  if (Notification.permission!=='granted') return;
+  new Notification(`📅 Feriado en ${dias} días`, {
+    body:`${nombre}\n${fmtFull(fecha)}`, icon:'icons/icon-192.png'
+  });
+}
+
+// Restaurar estado del botón si ya tenía notif activas
+if (localStorage.getItem('notif')==='1' && Notification?.permission==='granted') {
+  const b = document.getElementById('btnNotif');
+  b.textContent='✓ Activadas'; b.className='btn btn-muted'; b.disabled=true;
+}
+
+// ── INSTALL ───────────────────────────────────────────────────
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt=e;
+  document.getElementById('installBanner').classList.add('visible');
+});
+async function installApp() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt=null;
+  document.getElementById('installBanner').classList.remove('visible');
+  if (outcome==='accepted') showToast('¡App instalada! 🎉');
+}
+window.addEventListener('appinstalled', ()=>document.getElementById('installBanner').classList.remove('visible'));
+
+// ── TOAST ─────────────────────────────────────────────────────
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// ── SERVICE WORKER ────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(e=>console.warn('SW:',e));
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+cargarDatos();
+</script>
+</body>
+</html>

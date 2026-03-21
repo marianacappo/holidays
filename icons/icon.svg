@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Fondo celeste -->
+  <rect width="512" height="512" rx="80" fill="#1565c0"/>
+  <!-- Franja blanca central -->
+  <rect y="170" width="512" height="172" fill="#ffffff"/>
+  <!-- Sol de Mayo -->
+  <circle cx="256" cy="256" r="68" fill="#f5c842"/>
+  <!-- Rayos del sol (16 rayos alternados rectos y ondulados) -->
+  <g fill="#f5c842" transform="translate(256,256)">
+    <!-- Rayos rectos -->
+    <rect x="-6" y="-130" width="12" height="45" rx="5"/>
+    <rect x="-6" y="85" width="12" height="45" rx="5" transform="rotate(180)"/>
+    <rect x="-6" y="-130" width="12" height="45" rx="5" transform="rotate(45)"/>
+    <rect x="-6" y="-130" width="12" height="45" rx="5" transform="rotate(90)"/>
+    <rect x="-6" y="-130" width="12" height="45" rx="5" transform="rotate(135)"/>
+    <rect x="-6" y="-130" width="12" height="45" rx="5" transform="rotate(225)"/>
+    <rect x="-6" y="-130" width="12" height="45" rx="5" transform="rotate(270)"/>
+    <rect x="-6" y="-130" width="12" height="45" rx="5" transform="rotate(315)"/>
+    <!-- Rayos ondulados (más cortos entre los rectos) -->
+    <ellipse cx="0" cy="-108" rx="5" ry="18" transform="rotate(22.5)"/>
+    <ellipse cx="0" cy="-108" rx="5" ry="18" transform="rotate(67.5)"/>
+    <ellipse cx="0" cy="-108" rx="5" ry="18" transform="rotate(112.5)"/>
+    <ellipse cx="0" cy="-108" rx="5" ry="18" transform="rotate(157.5)"/>
+    <ellipse cx="0" cy="-108" rx="5" ry="18" transform="rotate(202.5)"/>
+    <ellipse cx="0" cy="-108" rx="5" ry="18" transform="rotate(247.5)"/>
+    <ellipse cx="0" cy="-108" rx="5" ry="18" transform="rotate(292.5)"/>
+    <ellipse cx="0" cy="-108" rx="5" ry="18" transform="rotate(337.5)"/>
+  </g>
+  <!-- Cara del sol -->
+  <circle cx="230" cy="248" r="9" fill="#1565c0"/>
+  <circle cx="282" cy="248" r="9" fill="#1565c0"/>
+  <path d="M 230 272 Q 256 296 282 272" stroke="#1565c0" stroke-width="7" fill="none" stroke-linecap="round"/>
+</svg>
